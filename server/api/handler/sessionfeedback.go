@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/cargoreligion/booking/server/api/middleware"
 	"github.com/cargoreligion/booking/server/service"
 	"github.com/google/uuid"
 )
@@ -17,8 +18,12 @@ func NewSessionFeedbackHandler(service *service.SessionFeedbackService) *Session
 }
 
 func (h *SessionFeedbackHandler) CreateSessionFeedback(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 	var req struct {
-		CoachID      uuid.UUID `json:"coach_id"`
 		SlotID       uuid.UUID `json:"slot_id"`
 		Satisfaction int       `json:"satisfaction"`
 		Notes        string    `json:"notes"`
@@ -31,7 +36,7 @@ func (h *SessionFeedbackHandler) CreateSessionFeedback(w http.ResponseWriter, r 
 		http.Error(w, "Satisfaction must be between 1 and 5", http.StatusBadRequest)
 		return
 	}
-	if err := h.service.CreateSessionFeedback(req.CoachID, req.SlotID, req.Satisfaction, req.Notes); err != nil {
+	if err := h.service.CreateSessionFeedback(userID, req.SlotID, req.Satisfaction, req.Notes); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -39,12 +44,12 @@ func (h *SessionFeedbackHandler) CreateSessionFeedback(w http.ResponseWriter, r 
 }
 
 func (h *SessionFeedbackHandler) GetPastSessionFeedbacks(w http.ResponseWriter, r *http.Request) {
-	coachID, err := uuid.Parse(r.URL.Query().Get("coach_id"))
+	userID, err := middleware.GetUserID(r.Context())
 	if err != nil {
-		http.Error(w, "Invalid coach ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	feedbacks, err := h.service.GetPastSessionFeedbacks(coachID)
+	feedbacks, err := h.service.GetPastSessionFeedbacks(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/cargoreligion/booking/server/api/handler"
+	"github.com/cargoreligion/booking/server/api/middleware"
 	"github.com/cargoreligion/booking/server/infrastructure/db"
 	"github.com/cargoreligion/booking/server/repository"
 	"github.com/cargoreligion/booking/server/service"
@@ -28,6 +29,7 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 	r.HandleFunc("/api/slots/available", slotHandler.GetAvailableSlots).Methods("GET")
 	r.HandleFunc("/api/slots/{id}/book", slotHandler.BookSlot).Methods("POST")
 	r.HandleFunc("/api/students/bookings", slotHandler.GetUpcomingBookingsForStudent).Methods("GET")
+	r.HandleFunc("/api/slots/{id}/details", slotHandler.GetSlotDetails).Methods("GET")
 
 	// Session feedback routes
 	r.HandleFunc("/api/session-feedback", sessionFeedbackHandler.CreateSessionFeedback).Methods("POST")
@@ -35,5 +37,6 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 
 	// User routes
 	r.HandleFunc("/api/users", userHandler.GetAllUsers).Methods("GET")
+	r.Use(middleware.WithUserID)
 	return r
 }

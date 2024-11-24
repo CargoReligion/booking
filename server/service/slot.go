@@ -181,3 +181,25 @@ func (s *SlotService) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]mode
 
 	return slots, nil
 }
+
+func (s *SlotService) GetSlotDetails(userID, slotID uuid.UUID) (*model.SlotDetails, error) {
+	// Fetch the slot details
+	slotDetails, err := s.slotRepo.GetSlotDetails(slotID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching slot details: %w", err)
+	}
+
+	// Check if the user is either the coach or the student for this slot
+	if slotDetails.CoachID != userID && (slotDetails.StudentID == nil || *slotDetails.StudentID != userID) {
+		return nil, &ErrNotAuthorized{UserID: userID.String(), Action: "view slot details"}
+	}
+
+	// If the slot is not booked, remove student information
+	if !slotDetails.Booked {
+		slotDetails.StudentID = nil
+		slotDetails.StudentName = ""
+		slotDetails.StudentPhoneNumber = ""
+	}
+
+	return slotDetails, nil
+}

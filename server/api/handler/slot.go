@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cargoreligion/booking/server/api/middleware"
 	"github.com/cargoreligion/booking/server/service"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -22,8 +23,12 @@ func NewSlotHandler(service *service.SlotService) *SlotHandler {
 
 func (h *SlotHandler) CreateSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 	var req struct {
-		CoachID   uuid.UUID `json:"coach_id"`
 		StartTime time.Time `json:"start_time"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -31,7 +36,7 @@ func (h *SlotHandler) CreateSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.CreateSlot(req.CoachID, req.StartTime)
+	id, err := h.service.CreateSlot(userID, req.StartTime)
 	if err != nil {
 		switch err.Error() {
 		case "only coaches can create slots":
@@ -64,12 +69,12 @@ func (h *SlotHandler) CreateSlot(w http.ResponseWriter, r *http.Request) {
 
 func (h *SlotHandler) GetUpcomingSlots(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	coachID, err := uuid.Parse(r.URL.Query().Get("coach_id"))
+	userID, err := middleware.GetUserID(r.Context())
 	if err != nil {
-		http.Error(w, "Invalid coach ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	slots, err := h.service.GetUpcomingSlots(coachID)
+	slots, err := h.service.GetUpcomingSlots(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -89,11 +94,9 @@ func (h *SlotHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) 
 
 func (h *SlotHandler) BookSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var req struct {
-		StudentID uuid.UUID `json:"student_id"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 	slotID, err := uuid.Parse(mux.Vars(r)["id"])
@@ -101,7 +104,7 @@ func (h *SlotHandler) BookSlot(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid slot ID", http.StatusBadRequest)
 		return
 	}
-	if err := h.service.BookSlot(slotID, req.StudentID); err != nil {
+	if err := h.service.BookSlot(slotID, userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -109,14 +112,13 @@ func (h *SlotHandler) BookSlot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SlotHandler) GetUpcomingBookingsForStudent(w http.ResponseWriter, r *http.Request) {
-	studentIDStr := r.URL.Query().Get("student_id")
-	studentID, err := uuid.Parse(studentIDStr)
+	userID, err := middleware.GetUserID(r.Context())
 	if err != nil {
-		http.Error(w, "Invalid student ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	slots, err := h.service.GetUpcomingBookingsForStudent(studentID)
+	slots, err := h.service.GetUpcomingBookingsForStudent(userID)
 	if err != nil {
 		fmt.Println(err.Error())
 		var errNotStudent *service.ErrNotStudent
@@ -130,4 +132,34 @@ func (h *SlotHandler) GetUpcomingBookingsForStudent(w http.ResponseWriter, r *ht
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(slots)
+}
+
+func (h *SlotHandler) GetSlotDetails(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Extract slot ID from the URL path
+	vars := mux.Vars(r)
+	slotID, err := uuid.Parse(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid slot ID", http.StatusBadRequest)
+		return
+	}
+
+	slotDetails, err := h.service.GetSlotDetails(userID, slotID)
+	if err != nil {
+		var errNotAuthorized *service.ErrNotAuthorized
+		if errors.As(err, &errNotAuthorized) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(slotDetails)
 }

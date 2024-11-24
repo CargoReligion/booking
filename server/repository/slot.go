@@ -115,3 +115,24 @@ func (r *SlotRepository) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]m
 	err := r.dbc.Select(&slots, query, studentID, time.Now())
 	return slots, err
 }
+
+func (r *SlotRepository) GetSlotDetails(slotID uuid.UUID) (*model.SlotDetails, error) {
+	var slotDetails model.SlotDetails
+	query := `
+        SELECT 
+            s.*,
+            c.name AS coach_name,
+            c.phone_number AS coach_phone_number,
+            st.name AS student_name,
+            st.phone_number AS student_phone_number
+        FROM slots s
+        JOIN users c ON s.coach_id = c.id
+        LEFT JOIN users st ON s.student_id = st.id
+        WHERE s.id = $1
+    `
+	err := r.dbc.NamedGetSingleEntity(&slotDetails, query, slotID)
+	if err != nil {
+		return nil, err
+	}
+	return &slotDetails, nil
+}
