@@ -1,0 +1,8 @@
+CREATE TABLE slot (
+    id UUID PRIMARY KEY,
+    coach_id UUID NOT NULL,
+    student_id UUID,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    booked BOOLEAN NOT NULL DEFAULT FALSE
+);

@@ -12,8 +12,8 @@ const (
 )
 
 type User struct {
-	ID    uuid.UUID `db:"id" json:"id"`
-	Name  string    `db:"name" json:"name"`
-	Email string    `db:"email" json:"email"`
-	Role  UserRole  `db:"user_role" json:"role"`
+	ID          uuid.UUID `db:"id" json:"id"`
+	Name        string    `db:"name" json:"name"`
+	PhoneNumber string    `db:"phone_number" json:"phoneNumber"`
+	Role        UserRole  `db:"user_role" json:"role"`
 }
