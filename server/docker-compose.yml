@@ -1,0 +1,53 @@
+services:
+  api:
+    build: .
+    ports:
+      - 8080:8080
+    environment:
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_NAME=stepful
+      - DB_PORT=5432
+      - PORT=8080
+    depends_on:
+      - db
+      - migrations
+    networks:
+      - stepful-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=stepful
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - stepful-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrations:
+    image: flyway/flyway:9
+    command:
+      -url=jdbc:postgresql://db/stepful -locations=filesystem:/dbscripts -schemas=public -user=postgres -password=admin -connectRetries=60 migrate
+    volumes:
+     - .:/dbscripts
+    depends_on:
+     - db
+    networks:
+      - stepful-network
+
+volumes:
+  postgres_data:
+
+networks:
+  stepful-network:
+    driver: bridge
