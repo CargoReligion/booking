@@ -6,3 +6,15 @@ CREATE TABLE slot (
     end_time TIMESTAMP WITH TIME ZONE NOT NULL,
     booked BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+ALTER TABLE slots 
+ADD CONSTRAINT fk_slots_coach 
+FOREIGN KEY (coach_id) REFERENCES users(id);
+
+ALTER TABLE slots 
+ADD CONSTRAINT fk_slots_student 
+FOREIGN KEY (student_id) REFERENCES users(id);
+
+ALTER TABLE slots
+ADD CONSTRAINT check_slot_times
+CHECK (end_time > start_time);

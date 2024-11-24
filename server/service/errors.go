@@ -49,3 +49,21 @@ type ErrNotCoach struct {
 func (e *ErrNotCoach) Error() string {
 	return fmt.Sprintf("user with ID %s is not a coach and cannot view upcoming slots", e.UserID)
 }
+
+type ErrNotAuthorized struct {
+	UserID string
+	Action string
+}
+
+func (e *ErrNotAuthorized) Error() string {
+	return fmt.Sprintf("user with ID %s is not authorized to %s", e.UserID, e.Action)
+}
+
+type ErrSlotNotAssignedToCoach struct {
+	SlotID  string
+	CoachID string
+}
+
+func (e *ErrSlotNotAssignedToCoach) Error() string {
+	return fmt.Sprintf("slot with ID %s is not assigned to coach with ID %s", e.SlotID, e.CoachID)
+}

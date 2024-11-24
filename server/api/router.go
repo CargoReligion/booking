@@ -16,6 +16,10 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 	slotRepo := repository.NewSlotRepository(dbc)
 	slotService := service.NewSlotService(slotRepo, userRepo)
 	slotHandler := handler.NewSlotHandler(slotService)
+
+	sessionRepo := repository.NewSessionFeedbackRepository(dbc)
+	sessionService := service.NewSessionFeedbackService(sessionRepo, slotRepo, userRepo)
+	sessionFeedbackHandler := handler.NewSessionFeedbackHandler(sessionService)
 	r := mux.NewRouter()
 
 	// Slot routes
@@ -24,6 +28,10 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 	r.HandleFunc("/api/slots/available", slotHandler.GetAvailableSlots).Methods("GET")
 	r.HandleFunc("/api/slots/{id}/book", slotHandler.BookSlot).Methods("POST")
 	r.HandleFunc("/api/students/bookings", slotHandler.GetUpcomingBookingsForStudent).Methods("GET")
+
+	// Session feedback routes
+	r.HandleFunc("/api/session-feedback", sessionFeedbackHandler.CreateSessionFeedback).Methods("POST")
+	r.HandleFunc("/api/session-feedback/past", sessionFeedbackHandler.GetPastSessionFeedbacks).Methods("GET")
 
 	// User routes
 	r.HandleFunc("/api/users", userHandler.GetAllUsers).Methods("GET")
