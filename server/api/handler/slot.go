@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -104,4 +106,28 @@ func (h *SlotHandler) BookSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *SlotHandler) GetUpcomingBookingsForStudent(w http.ResponseWriter, r *http.Request) {
+	studentIDStr := r.URL.Query().Get("student_id")
+	studentID, err := uuid.Parse(studentIDStr)
+	if err != nil {
+		http.Error(w, "Invalid student ID", http.StatusBadRequest)
+		return
+	}
+
+	slots, err := h.service.GetUpcomingBookingsForStudent(studentID)
+	if err != nil {
+		fmt.Println(err.Error())
+		var errNotStudent *service.ErrNotStudent
+		if errors.As(err, &errNotStudent) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(slots)
 }

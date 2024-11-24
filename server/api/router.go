@@ -23,6 +23,7 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 	r.HandleFunc("/api/slots/upcoming", slotHandler.GetUpcomingSlots).Methods("GET")
 	r.HandleFunc("/api/slots/available", slotHandler.GetAvailableSlots).Methods("GET")
 	r.HandleFunc("/api/slots/{id}/book", slotHandler.BookSlot).Methods("POST")
+	r.HandleFunc("/api/students/bookings", slotHandler.GetUpcomingBookingsForStudent).Methods("GET")
 
 	// User routes
 	r.HandleFunc("/api/users", userHandler.GetAllUsers).Methods("GET")

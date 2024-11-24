@@ -161,3 +161,23 @@ func (s *SlotService) BookSlot(slotID, studentID uuid.UUID) error {
 
 	return nil
 }
+
+func (s *SlotService) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]model.Slot, error) {
+	// First, check if the user is a student
+	user, err := s.userRepo.GetUserByID(studentID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching user: %w", err)
+	}
+
+	if user.Role != model.RoleStudent {
+		return nil, &ErrNotStudent{UserID: studentID.String()}
+	}
+
+	// If the user is a student, proceed to fetch upcoming bookings
+	slots, err := s.slotRepo.GetUpcomingBookingsForStudent(studentID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching upcoming bookings: %w", err)
+	}
+
+	return slots, nil
+}

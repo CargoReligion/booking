@@ -100,3 +100,18 @@ func (r *SlotRepository) HasOverlappingBooking(studentID uuid.UUID, startTime, e
 	}
 	return count > 0, nil
 }
+
+func (r *SlotRepository) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]model.Slot, error) {
+	var slots []model.Slot
+	query := `
+		SELECT s.*, u.name as coach_name
+		FROM slot s
+		JOIN stepful_user u ON s.coach_id = u.id
+		WHERE s.student_id = $1 
+		AND s.start_time > $2
+		AND s.booked = true
+		ORDER BY s.start_time ASC
+	`
+	err := r.dbc.Select(&slots, query, studentID, time.Now())
+	return slots, err
+}
