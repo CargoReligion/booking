@@ -3,6 +3,7 @@
     import { api } from '$lib/api';
     import type { SlotData, CreateSlotData, Paginated } from '../../types';
     import { currentUser } from '$lib/userStore';
+    import { formatDate } from '$lib/utils';
 
     let upcomingSlots: Paginated<SlotData> = {
         data: [],
@@ -72,19 +73,7 @@
             alert('Failed to create slot. Please try again.');
         }
     }
-
-    function formatDate(dateString: string): string {
-        const date = new Date(dateString);
-        return date.toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZoneName: 'short'
-        });
-    }
-
+    
     const timeSlots = Array.from({ length: 33 }, (_, i) => {
         const hours = Math.floor(i / 4) + 9;
         const minutes = (i % 4) * 15;

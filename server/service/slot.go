@@ -110,8 +110,25 @@ func (s *SlotService) GetUpcomingSlots(userID uuid.UUID, page, pageSize int) ([]
 	return paginatedSlots, totalSlots, nil
 }
 
-func (s *SlotService) GetAvailableSlots() ([]model.Slot, error) {
-	return s.slotRepo.GetAvailableSlots()
+func (s *SlotService) GetAvailableSlots(coachId uuid.UUID, page, pageSize int) ([]model.Slot, int, error) {
+	user, err := s.userRepo.GetUserByID(coachId)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error fetching user: %w", err)
+	}
+
+	if user.Role != model.RoleCoach {
+		return nil, 0, &ErrNotCoach{UserID: coachId.String()}
+	}
+
+	offset := (page - 1) * pageSize
+	paginatedSlots, totalSlots, err := s.slotRepo.GetAvailableSlots(coachId, offset, pageSize)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error fetching available slots: %w", err)
+	}
+	if paginatedSlots == nil {
+		paginatedSlots = []model.Slot{} // Return an empty slice instead of nil
+	}
+	return paginatedSlots, totalSlots, nil
 }
 
 func (s *SlotService) BookSlot(slotID, studentID uuid.UUID) error {

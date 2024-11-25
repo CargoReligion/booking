@@ -95,12 +95,28 @@ func (h *SlotHandler) GetUpcomingSlots(w http.ResponseWriter, r *http.Request) {
 
 func (h *SlotHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	slots, err := h.service.GetAvailableSlots()
+	// Extract coachId from the URL path
+	vars := mux.Vars(r)
+	coachId, err := uuid.Parse(vars["coachId"])
+	if err != nil {
+		http.Error(w, "Invalid coach ID", http.StatusBadRequest)
+		return
+	}
+	page, pageSize := getPaginationParams(r)
+	paginatedSlots, totalCount, err := h.service.GetAvailableSlots(coachId, page, pageSize)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(slots)
+	totalPages := (totalCount + pageSize - 1) / pageSize
+	response := model.Paginated[model.Slot]{
+		Data:       paginatedSlots,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+		TotalCount: totalCount,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *SlotHandler) BookSlot(w http.ResponseWriter, r *http.Request) {

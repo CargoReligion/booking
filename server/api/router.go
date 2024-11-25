@@ -29,7 +29,7 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 	// Slot routes
 	r.HandleFunc("/api/slots", slotHandler.CreateSlot).Methods("POST")
 	r.HandleFunc("/api/slots/upcoming", slotHandler.GetUpcomingSlots).Methods("GET")
-	r.HandleFunc("/api/slots/available", slotHandler.GetAvailableSlots).Methods("GET")
+	r.HandleFunc("/api/slots/available/{coachId}", slotHandler.GetAvailableSlots).Methods("GET")
 	r.HandleFunc("/api/slots/{id}/book", slotHandler.BookSlot).Methods("POST")
 	r.HandleFunc("/api/students/bookings", slotHandler.GetUpcomingBookingsForStudent).Methods("GET")
 	r.HandleFunc("/api/slots/{id}/details", slotHandler.GetSlotDetails).Methods("GET")

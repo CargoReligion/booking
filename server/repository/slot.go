@@ -48,11 +48,29 @@ func (r *SlotRepository) GetUpcomingSlots(coachID uuid.UUID, offset, pagesize in
 	return slots, totalCount, err
 }
 
-func (r *SlotRepository) GetAvailableSlots() ([]model.Slot, error) {
+func (r *SlotRepository) GetAvailableSlots(coachID uuid.UUID, offset, pagesize int) ([]model.Slot, int, error) {
+	var totalCount int
+	query := `SELECT COUNT(*) FROM slot WHERE coach_id = $1 AND booked = false AND start_time > NOW()`
+	err := r.dbc.GetSingleEntity(&totalCount, query, coachID)
+	if err != nil {
+		return nil, 0, err
+	}
 	var slots []model.Slot
-	query := `SELECT * FROM slot WHERE booked = false AND start_time > NOW() ORDER BY start_time ASC`
-	err := r.dbc.Select(&slots, query)
-	return slots, err
+	query = `
+		SELECT 
+			* 
+		FROM 
+			slot 
+		WHERE 
+			coach_id = $1 AND
+			booked = false AND 
+			start_time > NOW() 
+		ORDER BY 
+			start_time ASC
+			LIMIT $2 OFFSET $3
+		`
+	err = r.dbc.Select(&slots, query, coachID, pagesize, offset)
+	return slots, totalCount, err
 }
 
 func (r *SlotRepository) GetSlotByID(id uuid.UUID) (*model.Slot, error) {

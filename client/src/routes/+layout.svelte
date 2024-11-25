@@ -1,11 +1,14 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { api, setUserID } from '$lib/api';
-    import type { User, ApiResponse } from '../types';
+    import type { User } from '../types';
     import { goto } from '$app/navigation';
     import { currentUser } from '$lib/userStore';
     import { browser } from '$app/environment';
+    import { writable } from 'svelte/store';
   
+    export const allUsers = writable<User[]>([]);
+
     let users: User[] = [];
     let selectedUser: User | null = null;
   
@@ -15,6 +18,8 @@
         const response: User[] = await api.getAllUsers();
         console.log('Response received:', response);
         users = response;
+        allUsers.set(users);
+        console.log('Users set:', response);
         console.log('Users array:', users);
         
         if (browser && $currentUser) {

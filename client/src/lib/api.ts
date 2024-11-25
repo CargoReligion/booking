@@ -43,14 +43,28 @@ export const api = {
     });
   },
 
-  getAvailableSlots: () => 
-    axiosInstance.get<ApiResponse<SlotData[]>>(`${API_BASE_URL}/slots/available`),
+  getAvailableSlots: (coachId: string, page: number = 1, pageSize: number = 10) => {
+    return axiosInstance.get<Paginated<SlotData>>(`/slots/available/${coachId}`, {
+      params: { page, pageSize }
+    })
+    .then(response => response.data)
+    .catch(error => {
+      console.error('Error in getAvailableSlots:', error);
+      throw error;
+    });
+  },
 
   bookSlot: (id: string) => 
     axiosInstance.post<ApiResponse<SlotData>>(`${API_BASE_URL}/slots/${id}/book`),
 
-  getUpcomingBookingsForStudent: () => 
-    axiosInstance.get<ApiResponse<SlotData[]>>(`${API_BASE_URL}/students/bookings`),
+  getUpcomingBookingsForStudent: () => {
+    return axiosInstance.get<Paginated<SlotData>>('/students/bookings')
+      .then(response => response.data)
+      .catch(error => {
+        console.error('Error in getUpcomingBookingsForStudent:', error);
+        throw error;
+      });
+  },
 
   getSlotDetails: (id: number) => 
     axiosInstance.get<ApiResponse<SlotData>>(`${API_BASE_URL}/slots/${id}/details`),

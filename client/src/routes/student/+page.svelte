@@ -1,60 +1,82 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { api } from '$lib/api';
-    import type { SlotData, ApiResponse } from '../../types';
-    import type { AxiosResponse } from 'axios';
-  
-    let availableSlots: SlotData[] = [];
-    let upcomingBookings: SlotData[] = [];
-    let currentStudentId: string = 'test'; // This should be set to the actual logged-in student's ID
-  
+    import type { SlotData, User, Paginated } from '../../types';
+    import { currentUser, allUsers } from '$lib/userStore';
+    import { formatDate } from '$lib/utils';
+    import BookSession from './BookSession.svelte';
+
+    let upcomingBookings: Paginated<SlotData> = {
+        data: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0
+    };
+    let currentStudentId: string | null = null;
+    let showBookingComponent = false;
+    let coaches: User[] = [];
+
+    currentUser.subscribe(user => {
+        currentStudentId = user?.id || null;
+    });
+
+    $: {
+        console.log('Reactive statement running, allUsers:', $allUsers);
+        coaches = $allUsers.filter(user => user.role === 'coach');
+        console.log('Filtered coaches:', coaches);
+    }
     onMount(async () => {
-      await refreshData();
+        if (currentStudentId) {
+            await refreshBookings();
+        } else {
+            console.log('No student selected. Please use the impersonate dropdown to select a student.');
+        }
     });
   
-    async function refreshData() {
-      try {
-        const [availableResponse, upcomingResponse]: [
-          AxiosResponse<ApiResponse<SlotData[]>>,
-          AxiosResponse<ApiResponse<SlotData[]>>
-        ] = await Promise.all([
-          api.getAvailableSlots(),
-          api.getUpcomingBookingsForStudent()
-        ]);
-        availableSlots = availableResponse.data.data;
-        upcomingBookings = upcomingResponse.data.data;
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
+    async function refreshBookings() {
+        try {
+            upcomingBookings = await api.getUpcomingBookingsForStudent();
+        } catch (error) {
+            console.error('Error fetching upcoming bookings:', error);
+        }
     }
-  
-    async function bookSlot(id: string) {
-      try {
-        await api.bookSlot(id);
-        alert('Slot booked successfully!');
-        await refreshData();
-      } catch (error) {
-        console.error('Error booking slot:', error);
-        alert('Failed to book slot. Please try again.');
-      }
+
+    function toggleBookingComponent() {
+        showBookingComponent = !showBookingComponent;
     }
+
+    $: {
+        if ($allUsers.length > 0) {
+            coaches = $allUsers.filter(user => user.role === 'coach');
+            console.log('Coaches updated after allUsers change:', coaches);
+        }
+    }
+
   </script>
   
   <h1>Student Dashboard</h1>
-  
-  <h2>Available Slots:</h2>
-  <ul>
-    {#each availableSlots as slot (slot.id)}
-      <li>
-        {slot.startTime} - Coach: {slot.coachId}
-        <button on:click={() => bookSlot(slot.id)}>Book</button>
-      </li>
-    {/each}
-  </ul>
-  
-  <h2>Upcoming Bookings:</h2>
-  <ul>
-    {#each upcomingBookings as booking (booking.id)}
-      <li>{booking.startTime} - Coach: {booking.coachId}</li>
-    {/each}
-  </ul>
+
+{#if $currentUser}
+    <p>Current Student: {$currentUser.name}</p>
+{:else}
+    <p>No student selected. Please use the impersonate dropdown to select a student.</p>
+{/if}
+
+{#if showBookingComponent}
+    <button class="link-button" on:click={toggleBookingComponent}>Go Back</button>
+    <BookSession />
+{:else}
+    <button on:click={toggleBookingComponent}>Book a Session</button>
+
+    <!-- <h2>Upcoming Bookings:</h2>
+    {#if upcomingBookings.data.length > 0}
+        <ul>
+            {#each upcomingBookings.data as booking}
+                <li>{formatDate(booking.startTime)} - Coach: {booking.coachId}</li>
+            {/each}
+        </ul>
+    {:else}
+        <p>You have no upcoming bookings.</p>
+    {/if} -->
+{/if}
