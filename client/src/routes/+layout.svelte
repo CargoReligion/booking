@@ -1,26 +1,19 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount} from 'svelte';
     import { api, setUserID } from '$lib/api';
     import type { User } from '../types';
     import { goto } from '$app/navigation';
     import { currentUser } from '$lib/userStore';
+    import { userChangeStore } from '$lib/userChangeStore';
     import { browser } from '$app/environment';
-    import { writable } from 'svelte/store';
-  
-    export const allUsers = writable<User[]>([]);
-
+    
     let users: User[] = [];
     let selectedUser: User | null = null;
   
     onMount(async () => {
       try {
-        console.log('Fetching users...');
         const response: User[] = await api.getAllUsers();
-        console.log('Response received:', response);
         users = response;
-        allUsers.set(users);
-        console.log('Users set:', response);
-        console.log('Users array:', users);
         
         if (browser && $currentUser) {
           // Find the persisted user in the fetched users array
@@ -38,6 +31,7 @@
       if (selectedUser) {
         setUserID(selectedUser.id);
         currentUser.set(selectedUser);
+        userChangeStore.set(selectedUser);
         if (selectedUser.role === 'coach') {
           goto('/coach');
         } else {
@@ -45,13 +39,12 @@
         }
       } else {
         currentUser.set(null);
+        userChangeStore.set(null);
         setUserID('');
       }
     }
 
-    $: console.log('Current selected user:', selectedUser);
 </script>
-
 <div style="display: flex; justify-content: flex-end; padding: 1rem;">
   <select bind:value={selectedUser} on:change={handleUserSelect}>
     <option value={null}>Impersonate</option>
@@ -61,4 +54,4 @@
   </select>
 </div>
 
-<slot></slot>
+<slot/>

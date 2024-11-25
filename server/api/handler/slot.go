@@ -144,8 +144,8 @@ func (h *SlotHandler) GetUpcomingBookingsForStudent(w http.ResponseWriter, r *ht
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-
-	slots, err := h.service.GetUpcomingBookingsForStudent(userID)
+	page, pageSize := getPaginationParams(r)
+	paginatedSlots, totalCount, err := h.service.GetUpcomingBookingsForStudent(userID, page, pageSize)
 	if err != nil {
 		fmt.Println(err.Error())
 		var errNotStudent *service.ErrNotStudent
@@ -156,9 +156,16 @@ func (h *SlotHandler) GetUpcomingBookingsForStudent(w http.ResponseWriter, r *ht
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
+	totalPages := (totalCount + pageSize - 1) / pageSize
+	response := model.Paginated[model.Slot]{
+		Data:       paginatedSlots,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+		TotalCount: totalCount,
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(slots)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *SlotHandler) GetSlotDetails(w http.ResponseWriter, r *http.Request) {

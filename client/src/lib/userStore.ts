@@ -40,7 +40,6 @@ function createAllUsersStore() {
     return {
         subscribe,
         set: (value: User[]) => {
-            console.log('Setting allUsers to:', value);
             if (browser) {
                 localStorage.setItem('allUsers', JSON.stringify(value));
             }
@@ -49,7 +48,6 @@ function createAllUsersStore() {
         update: (updater: (value: User[]) => User[]) => {
             update(currentValue => {
                 const newValue = updater(currentValue);
-                console.log('Updated allUsers to:', newValue);
                 if (browser) {
                     localStorage.setItem('allUsers', JSON.stringify(newValue));
                 }
@@ -60,9 +58,3 @@ function createAllUsersStore() {
 }
 
 export const allUsers = createAllUsersStore();
-
-if (browser) {
-    allUsers.subscribe(value => {
-        console.log('allUsers store updated:', value);
-    });
-}

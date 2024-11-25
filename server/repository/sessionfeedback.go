@@ -16,7 +16,7 @@ func NewSessionFeedbackRepository(dbc db.DbClient) *SessionFeedbackRepository {
 
 func (r *SessionFeedbackRepository) CreateSessionFeedback(feedback model.SessionFeedback) error {
 	query := `INSERT INTO session_feedback (id, slot_id, satisfaction, notes, created_at) 
-			  VALUES (:id, :slot_id, :satisfaction, :notes, :created_at)`
+			  VALUES (:id, :slot_id, :satisfaction, :notes, NOW())`
 	_, err := r.dbc.NamedExec(query, feedback)
 	return err
 }
@@ -24,7 +24,7 @@ func (r *SessionFeedbackRepository) CreateSessionFeedback(feedback model.Session
 func (r *SessionFeedbackRepository) GetPastSessionFeedback(coachID uuid.UUID) ([]model.SessionFeedback, error) {
 	var feedbacks []model.SessionFeedback
 	query := `SELECT sf.* FROM session_feedback sf
-			  JOIN slots s ON sf.slot_id = s.id
+			  JOIN slot s ON sf.slot_id = s.id
 			  WHERE s.coach_id = $1 AND s.end_time < NOW()
 			  ORDER BY s.start_time DESC`
 	err := r.dbc.Select(&feedbacks, query, coachID)

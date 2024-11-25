@@ -7,14 +7,14 @@ CREATE TABLE slot (
     booked BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-ALTER TABLE slots 
+ALTER TABLE slot
 ADD CONSTRAINT fk_slots_coach 
-FOREIGN KEY (coach_id) REFERENCES users(id);
+FOREIGN KEY (coach_id) REFERENCES stepful_user(id);
 
-ALTER TABLE slots 
+ALTER TABLE slot
 ADD CONSTRAINT fk_slots_student 
-FOREIGN KEY (student_id) REFERENCES users(id);
+FOREIGN KEY (student_id) REFERENCES stepful_user(id);
 
-ALTER TABLE slots
+ALTER TABLE slot
 ADD CONSTRAINT check_slot_times
 CHECK (end_time > start_time);

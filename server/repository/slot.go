@@ -135,9 +135,15 @@ func (r *SlotRepository) HasOverlappingBooking(studentID uuid.UUID, startTime, e
 	return count > 0, nil
 }
 
-func (r *SlotRepository) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]model.Slot, error) {
+func (r *SlotRepository) GetUpcomingBookingsForStudent(studentID uuid.UUID, offset, pagesize int) ([]model.Slot, int, error) {
+	var totalCount int
+	query := `SELECT COUNT(*) FROM slot WHERE student_id = $1 AND booked = true AND start_time > NOW()`
+	err := r.dbc.GetSingleEntity(&totalCount, query, studentID)
+	if err != nil {
+		return nil, 0, err
+	}
 	var slots []model.Slot
-	query := `
+	query = `
 		SELECT s.*, u.name as coach_name
 		FROM slot s
 		JOIN stepful_user u ON s.coach_id = u.id
@@ -145,9 +151,10 @@ func (r *SlotRepository) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]m
 		AND s.start_time > $2
 		AND s.booked = true
 		ORDER BY s.start_time ASC
+		LIMIT $3 OFFSET $4
 	`
-	err := r.dbc.Select(&slots, query, studentID, time.Now())
-	return slots, err
+	err = r.dbc.Select(&slots, query, studentID, time.Now(), pagesize, offset)
+	return slots, totalCount, err
 }
 
 func (r *SlotRepository) GetSlotDetails(slotID uuid.UUID) (*model.SlotDetails, error) {
@@ -159,12 +166,12 @@ func (r *SlotRepository) GetSlotDetails(slotID uuid.UUID) (*model.SlotDetails, e
             c.phone_number AS coach_phone_number,
             st.name AS student_name,
             st.phone_number AS student_phone_number
-        FROM slots s
-        JOIN users c ON s.coach_id = c.id
-        LEFT JOIN users st ON s.student_id = st.id
+        FROM slot s
+        JOIN stepful_user c ON s.coach_id = c.id
+        LEFT JOIN stepful_user st ON s.student_id = st.id
         WHERE s.id = $1
     `
-	err := r.dbc.NamedGetSingleEntity(&slotDetails, query, slotID)
+	err := r.dbc.GetSingleEntity(&slotDetails, query, slotID)
 	if err != nil {
 		return nil, err
 	}

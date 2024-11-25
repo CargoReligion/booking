@@ -10,4 +10,12 @@ declare global {
 	}
 }
 
+/// <reference types="svelte" />
+
+declare namespace svelteHTML {
+    interface HTMLProps<T> {
+        'on:userChanged'?: (event: CustomEvent<User | null>) => void;
+    }
+}
+
 export {};

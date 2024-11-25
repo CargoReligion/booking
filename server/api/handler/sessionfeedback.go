@@ -24,7 +24,7 @@ func (h *SessionFeedbackHandler) CreateSessionFeedback(w http.ResponseWriter, r 
 		return
 	}
 	var req struct {
-		SlotID       uuid.UUID `json:"slot_id"`
+		SlotID       uuid.UUID `json:"slotId"`
 		Satisfaction int       `json:"satisfaction"`
 		Notes        string    `json:"notes"`
 	}

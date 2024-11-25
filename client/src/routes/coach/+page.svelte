@@ -3,7 +3,10 @@
     import { api } from '$lib/api';
     import type { SlotData, CreateSlotData, Paginated } from '../../types';
     import { currentUser } from '$lib/userStore';
+    import { userChangeStore } from '$lib/userChangeStore';
     import { formatDate } from '$lib/utils';
+    import SlotDetails from '$lib/SlotDetails.svelte';
+    import CoachFeedback from '$lib/CoachFeedback.svelte';
 
     let upcomingSlots: Paginated<SlotData> = {
         data: [],
@@ -17,9 +20,32 @@
     let selectedTime: string = '09:00';
     
     let currentCoachId: string | null = null;
+    let selectedSlotId: string | null = null;
+    let feedbackSlotId: string | null = null;
 
+    function openFeedbackModal(slotId: string) {
+        feedbackSlotId = slotId;
+    }
+
+    function closeFeedbackModal() {
+        feedbackSlotId = null;
+    }
+
+    function handleFeedbackSubmitted() {
+        refreshSlots();
+    }
+    
     currentUser.subscribe(user => {
         currentCoachId = user?.id || null;
+    });
+
+    userChangeStore.subscribe(user => {
+        if (user && user.role === 'coach') {
+            refreshSlots();
+        }
+
+        selectedSlotId = null;
+        feedbackSlotId = null;
     });
 
     onMount(async () => {
@@ -32,7 +58,6 @@
 
     async function refreshSlots(page: number = 1) {
         try {
-            console.log('Refreshing slots for coach:', currentCoachId);
             upcomingSlots = await api.getUpcomingSlots(page, 10);
             currentPage = page;
         } catch (error) {
@@ -79,6 +104,13 @@
         const minutes = (i % 4) * 15;
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     });
+    function viewSlotDetails(slotId: string) {
+        selectedSlotId = slotId;
+    }
+
+    function closeSlotDetails() {
+        selectedSlotId = null;
+    }
 </script>
 
 <h1>Coach Dashboard</h1>
@@ -113,6 +145,10 @@
     <ul>
         {#each upcomingSlots.data as slot}
             <li>{formatDate(slot.startTime)} - {slot.booked ? 'Booked' : 'Available'}</li>
+            {#if slot.booked}
+                <button on:click={() => viewSlotDetails(slot.id)}>View Details</button>
+                <button on:click={() => openFeedbackModal(slot.id)}>Enter Feedback</button>
+            {/if}
         {/each}
     </ul>
     
@@ -138,7 +174,20 @@
 {:else}
     <p>You have no upcoming slots.</p>
 {/if}
-
+{#if selectedSlotId}
+  <SlotDetails 
+    slotId={selectedSlotId} 
+    userRole="coach" 
+    on:close={closeSlotDetails}
+  />
+{/if}
+{#if feedbackSlotId}
+  <CoachFeedback 
+    slotId={feedbackSlotId} 
+    on:close={closeFeedbackModal}
+    on:feedbackSubmitted={handleFeedbackSubmitted}
+  />
+{/if}
 <nav>
     <a href="/coach/past-sessions">View Past Sessions</a>
 </nav>

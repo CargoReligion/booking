@@ -8,21 +8,42 @@
   export interface SlotData {
     id: string;
     coachId: string;
+    coachName: string;
     startTime: string;
     endTime: string;
     studentId?: string;
     booked: boolean;
+  }
+
+  export interface SlotDetails {
+    id: string;
+    coachId: string;
+    coachName: string;
+    startTime: string;
+    endTime: string;
+    studentId?: string;
+    booked: boolean;
+    coachPhoneNumber: string;
+    studentPhoneNumber: string;
+    studentName: string;
   }
   
   export interface CreateSlotData {
     startTime: string;
   }
   
+  export interface CreateSessionFeedback {
+    slotId: string;
+    satisfaction: number;
+    notes: string;
+  }
+
   export interface SessionFeedback {
     id: string;
     slotId: string;
     satisfaction: number;
     notes: string;
+    createdAt: string;
   }
 
   export interface Paginated<T> {

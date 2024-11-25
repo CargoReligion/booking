@@ -73,8 +73,8 @@ func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.U
 	slot := model.Slot{
 		ID:        uuid.New(),
 		CoachID:   coachID,
-		StartTime: localStartTime,
-		EndTime:   endTime,
+		StartTime: localStartTime.UTC(),
+		EndTime:   endTime.UTC(),
 		Booked:    false,
 	}
 
@@ -184,24 +184,27 @@ func (s *SlotService) BookSlot(slotID, studentID uuid.UUID) error {
 	return nil
 }
 
-func (s *SlotService) GetUpcomingBookingsForStudent(studentID uuid.UUID) ([]model.Slot, error) {
+func (s *SlotService) GetUpcomingBookingsForStudent(studentID uuid.UUID, page, pageSize int) ([]model.Slot, int, error) {
 	// First, check if the user is a student
 	user, err := s.userRepo.GetUserByID(studentID)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching user: %w", err)
+		return nil, 0, fmt.Errorf("error fetching user: %w", err)
 	}
 
 	if user.Role != model.RoleStudent {
-		return nil, &ErrNotStudent{UserID: studentID.String()}
+		return nil, 0, &ErrNotStudent{UserID: studentID.String()}
 	}
-
+	offset := (page - 1) * pageSize
 	// If the user is a student, proceed to fetch upcoming bookings
-	slots, err := s.slotRepo.GetUpcomingBookingsForStudent(studentID)
+	paginatedSlots, totalCount, err := s.slotRepo.GetUpcomingBookingsForStudent(studentID, offset, pageSize)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching upcoming bookings: %w", err)
+		return nil, 0, fmt.Errorf("error fetching upcoming bookings: %w", err)
+	}
+	if paginatedSlots == nil {
+		paginatedSlots = []model.Slot{} // Return an empty slice instead of nil
 	}
 
-	return slots, nil
+	return paginatedSlots, totalCount, nil
 }
 
 func (s *SlotService) GetSlotDetails(userID, slotID uuid.UUID) (*model.SlotDetails, error) {

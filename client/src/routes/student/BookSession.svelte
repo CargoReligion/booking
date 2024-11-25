@@ -1,10 +1,14 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, createEventDispatcher } from 'svelte';
     import { api } from '$lib/api';
     import type { User, SlotData, Paginated } from '../../types';
     import { formatDate } from '$lib/utils';
+    import { currentUser } from '$lib/userStore';
 
-    export let coaches: User[] = [];
+    // @ts-ignore
+    const dispatch = createEventDispatcher();
+
+    let coaches: User[] = [];
     let selectedCoach: User | null = null;
     let availableSlots: Paginated<SlotData> = {
         data: [],
@@ -14,12 +18,16 @@
         totalPages: 0
     };
     let currentPage = 1;
+    let currentStudentId: string | null = null;
+
+    currentUser.subscribe(user => {
+        currentStudentId = user?.id || null;
+    });
 
     onMount(async () => {
         try {
             const response = await api.getAllUsers();
             coaches = response.filter(user => user.role === 'coach');
-            console.log('Fetched coaches:', coaches);
         } catch (error) {
             console.error('Error fetching coaches:', error);
         }
@@ -44,6 +52,22 @@
             fetchAvailableSlots(selectedCoach.id, newPage);
         }
     }
+
+    async function bookSlot(slotId: string) {
+        if (!currentStudentId) {
+            console.error('No student selected');
+            return;
+        }
+
+        try {
+            await api.bookSlot(slotId);
+            alert('Slot booked successfully!');
+            dispatch('bookingComplete');
+        } catch (error) {
+            console.error('Error booking slot:', error);
+            alert('Failed to book slot. Please try again.');
+        }
+    }
 </script>
 
 {#if !selectedCoach}
@@ -64,7 +88,10 @@
     {#if availableSlots.data.length > 0}
         <ul>
             {#each availableSlots.data as slot}
-                <li>{formatDate(slot.startTime)}</li>
+                <li>
+                    {formatDate(slot.startTime)}
+                    <button on:click={() => bookSlot(slot.id)}>Book</button>
+                </li>
             {/each}
         </ul>
         

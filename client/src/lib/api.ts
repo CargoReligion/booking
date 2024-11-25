@@ -1,6 +1,6 @@
 // src/lib/api.ts
 import axios from 'axios';
-import type { User, SlotData, SessionFeedback, CreateSlotData, ApiResponse, Paginated } from '../types';
+import type { User, SlotData, SlotDetails, CreateSessionFeedback, SessionFeedback, CreateSlotData, ApiResponse, Paginated } from '../types';
 import { browser } from '$app/environment';
 
 let initialUserId: string | null = null;
@@ -24,7 +24,6 @@ if (initialUserId) {
 
 // Add an interceptor to log headers for each request
 axiosInstance.interceptors.request.use(request => {
-    console.log('Request headers:', request.headers);
     return request;
   });
 
@@ -55,10 +54,12 @@ export const api = {
   },
 
   bookSlot: (id: string) => 
-    axiosInstance.post<ApiResponse<SlotData>>(`${API_BASE_URL}/slots/${id}/book`),
+    axiosInstance.post<SlotData>(`/slots/${id}/book`),
 
-  getUpcomingBookingsForStudent: () => {
-    return axiosInstance.get<Paginated<SlotData>>('/students/bookings')
+  getUpcomingBookingsForStudent: (page: number = 1, pageSize: number = 10) => {
+    return axiosInstance.get<Paginated<SlotData>>('/students/bookings', {
+        params: { page, pageSize }
+    })
       .then(response => response.data)
       .catch(error => {
         console.error('Error in getUpcomingBookingsForStudent:', error);
@@ -66,10 +67,16 @@ export const api = {
       });
   },
 
-  getSlotDetails: (id: number) => 
-    axiosInstance.get<ApiResponse<SlotData>>(`${API_BASE_URL}/slots/${id}/details`),
+  getSlotDetails: (slotId: string) => {
+    return axiosInstance.get<SlotDetails>(`/slots/${slotId}/details`)
+      .then(response => response.data)
+      .catch(error => {
+        console.error('Error in getSlotDetails:', error);
+        throw error;
+      });
+  },
 
-  createSessionFeedback: (feedbackData: SessionFeedback) => 
+  createSessionFeedback: (feedbackData: CreateSessionFeedback) => 
     axiosInstance.post<ApiResponse<SessionFeedback>>(`${API_BASE_URL}/session-feedback`, feedbackData),
 
   getPastSessionFeedbacks: () => 

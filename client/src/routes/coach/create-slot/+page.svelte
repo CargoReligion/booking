@@ -3,7 +3,6 @@
     import type { CreateSlotData } from '../../../types';
   
     let startTime = '';
-    let currentCoachId: number = 1; // This should be set to the actual logged-in coach's ID
   
     async function handleSubmit() {
       const slotData: CreateSlotData = {
