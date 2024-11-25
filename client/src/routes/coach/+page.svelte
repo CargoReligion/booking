@@ -5,7 +5,7 @@
     import { currentUser } from '$lib/userStore';
 
     let upcomingSlots: SlotData[] = [];
-    let selectedDate: string = new Date().toISOString().split('T')[0]; // Today's date
+    let selectedDate: string = new Date().toISOString().split('T')[0];
     let selectedTime: string = '09:00';
     
     let currentCoachId: string | null = null;
@@ -22,13 +22,40 @@
         }
     });
 
-
     async function refreshSlots() {
         try {
             const response: SlotData[] = await api.getUpcomingSlots();
             upcomingSlots = response;
         } catch (error) {
             console.error('Error fetching upcoming slots:', error);
+        }
+    }
+
+    function localToUTC(dateString: string, timeString: string): string {
+        const localDate = new Date(`${dateString}T${timeString}`);
+        return localDate.toISOString();
+    }
+
+    async function createSlot() {
+        if (!currentCoachId) {
+            alert('Please select a coach to impersonate first.');
+            return;
+        }
+
+        const utcStartTime = localToUTC(selectedDate, selectedTime);
+        const slotData: CreateSlotData = {
+            startTime: utcStartTime
+        };
+
+        try {
+            await api.createSlot(slotData);
+            alert('Slot created successfully!');
+            await refreshSlots();
+            // Reset time selection
+            selectedTime = '09:00';
+        } catch (error) {
+            console.error('Error creating slot:', error);
+            alert('Failed to create slot. Please try again.');
         }
     }
 
@@ -42,29 +69,6 @@
             minute: '2-digit',
             timeZoneName: 'short'
         });
-    }
-
-    async function createSlot() {
-        if (!currentCoachId) {
-            alert('Please select a coach to impersonate first.');
-            return;
-        }
-
-        const startTime = `${selectedDate}T${selectedTime}:00Z`;
-        const slotData: CreateSlotData = {
-            startTime: startTime,
-        };
-
-        try {
-            await api.createSlot(slotData);
-            alert('Slot created successfully!');
-            await refreshSlots();
-            // Reset time selection
-            selectedTime = '09:00';
-        } catch (error) {
-            console.error('Error creating slot:', error);
-            alert('Failed to create slot. Please try again.');
-        }
     }
 
     const timeSlots = Array.from({ length: 33 }, (_, i) => {
@@ -83,11 +87,6 @@
 {/if}
 
 <h2>Create New Slot</h2>
-{#if $currentUser}
-    <p>Current Coach: {$currentUser.name}</p>
-{:else}
-    <p>No coach selected. Please use the impersonate dropdown to select a coach.</p>
-{/if}
 <div>
     <label>
         Date:
@@ -104,7 +103,7 @@
         </select>
     </label>
 </div>
-<button on:click={createSlot} disabled={!currentCoachId}>Create Slot</button>
+<button on:click={createSlot}>Create Slot</button>
 
 <h2>Upcoming Slots:</h2>
 {#if upcomingSlots.length > 0}
@@ -116,6 +115,7 @@
 {:else}
     <p>You have no upcoming slots.</p>
 {/if}
+
 <nav>
     <a href="/coach/past-sessions">View Past Sessions</a>
 </nav>

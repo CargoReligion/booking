@@ -22,25 +22,27 @@ func NewSlotService(slotRepo *repository.SlotRepository, userRepo *repository.Us
 }
 
 func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.UUID, error) {
+	localLocation := time.Local
+	localStartTime := startTime.In(localLocation)
 	// Check if the slot is in the past
 	now := time.Now()
-	if startTime.Before(now) {
+	if localStartTime.Before(now) {
 		return uuid.Nil, fmt.Errorf("cannot create a slot in the past")
 	}
 
 	// Check if the start time is at a 15-minute increment
-	if startTime.Minute()%15 != 0 || startTime.Second() != 0 || startTime.Nanosecond() != 0 {
+	if localStartTime.Minute()%15 != 0 || localStartTime.Second() != 0 || localStartTime.Nanosecond() != 0 {
 		return uuid.Nil, fmt.Errorf("slot must start at 15-minute increments (e.g., 9:00, 9:15, 9:30, 9:45)")
 	}
 
 	// Check if the slot is between 9 AM and 5 PM
-	startHour := startTime.Hour()
+	startHour := localStartTime.Hour()
 	if startHour < 9 || startHour >= 17 {
 		return uuid.Nil, fmt.Errorf("slots must be between 9 AM and 5 PM")
 	}
 
 	// Calculate end time (2 hours after start time)
-	endTime := startTime.Add(2 * time.Hour)
+	endTime := localStartTime.Add(2 * time.Hour)
 
 	// Check if the end time is after 5 PM
 	if endTime.Hour() >= 17 && endTime.Minute() > 0 {
@@ -59,7 +61,7 @@ func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.U
 	}
 
 	// Check for overlapping slots
-	hasOverlap, err := s.slotRepo.HasOverlappingSlot(coachID, startTime, endTime)
+	hasOverlap, err := s.slotRepo.HasOverlappingSlot(coachID, localStartTime, endTime)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error checking for overlapping slots: %w", err)
 	}
@@ -71,7 +73,7 @@ func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.U
 	slot := model.Slot{
 		ID:        uuid.New(),
 		CoachID:   coachID,
-		StartTime: startTime,
+		StartTime: localStartTime,
 		EndTime:   endTime,
 		Booked:    false,
 	}
