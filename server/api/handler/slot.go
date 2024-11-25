@@ -29,7 +29,7 @@ func (h *SlotHandler) CreateSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		StartTime time.Time `json:"start_time"`
+		StartTime time.Time `json:"startTime"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

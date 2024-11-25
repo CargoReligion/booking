@@ -12,7 +12,7 @@ type contextKey string
 
 const (
 	UserIDContextKey contextKey = "userID"
-	UserIDHeader     string     = "X-User-ID"
+	UserIDHeader     string     = "X-User-Id"
 )
 
 // WithUserID middleware extracts user ID from header and adds it to context

@@ -1,11 +1,14 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/cargoreligion/booking/server/api/handler"
 	"github.com/cargoreligion/booking/server/api/middleware"
 	"github.com/cargoreligion/booking/server/infrastructure/db"
 	"github.com/cargoreligion/booking/server/repository"
 	"github.com/cargoreligion/booking/server/service"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -37,6 +40,17 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 
 	// User routes
 	r.HandleFunc("/api/users", userHandler.GetAllUsers).Methods("GET")
+
+	// CORS configuration
+	corsMiddleware := handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}), // Allow all origins
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization", "X-User-Id"}),
+	)
+	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Use(corsMiddleware)
 	r.Use(middleware.WithUserID)
 	return r
 }

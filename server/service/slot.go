@@ -101,7 +101,9 @@ func (s *SlotService) GetUpcomingSlots(userID uuid.UUID) ([]model.Slot, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error fetching upcoming slots: %w", err)
 	}
-
+	if slots == nil {
+		slots = []model.Slot{} // Return an empty slice instead of nil
+	}
 	return slots, nil
 }
 
