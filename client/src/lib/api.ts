@@ -1,6 +1,6 @@
 // src/lib/api.ts
 import axios from 'axios';
-import type { User, SlotData, SessionFeedback, CreateSlotData, ApiResponse } from '../types';
+import type { User, SlotData, SessionFeedback, CreateSlotData, ApiResponse, Paginated } from '../types';
 import { browser } from '$app/environment';
 
 let initialUserId: string | null = null;
@@ -32,8 +32,16 @@ export const api = {
   createSlot: (slotData: CreateSlotData): Promise<ApiResponse<SlotData>> => 
     axiosInstance.post(`${API_BASE_URL}/slots`, slotData),
 
-  getUpcomingSlots: () => 
-    axiosInstance.get<SlotData[]>(`${API_BASE_URL}/slots/upcoming`).then(response => response.data),
+  getUpcomingSlots: (page: number = 1, pageSize: number = 10) => {
+    return axiosInstance.get<Paginated<SlotData>>('/slots/upcoming', {
+      params: { page, pageSize }
+    })
+    .then(response => response.data)
+    .catch(error => {
+      console.error('Error in getUpcomingSlots:', error);
+      throw error;
+    });
+  },
 
   getAvailableSlots: () => 
     axiosInstance.get<ApiResponse<SlotData[]>>(`${API_BASE_URL}/slots/available`),

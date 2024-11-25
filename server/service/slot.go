@@ -87,26 +87,27 @@ func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.U
 	return id, nil
 }
 
-func (s *SlotService) GetUpcomingSlots(userID uuid.UUID) ([]model.Slot, error) {
+func (s *SlotService) GetUpcomingSlots(userID uuid.UUID, page, pageSize int) ([]model.Slot, int, error) {
 	// First, check if the user is a coach
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching user: %w", err)
+		return nil, 0, fmt.Errorf("error fetching user: %w", err)
 	}
 
 	if user.Role != model.RoleCoach {
-		return nil, &ErrNotCoach{UserID: userID.String()}
+		return nil, 0, &ErrNotCoach{UserID: userID.String()}
 	}
 
+	offset := (page - 1) * pageSize
 	// If the user is a coach, proceed to fetch upcoming slots
-	slots, err := s.slotRepo.GetUpcomingSlots(userID)
+	paginatedSlots, totalSlots, err := s.slotRepo.GetUpcomingSlots(userID, offset, pageSize)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching upcoming slots: %w", err)
+		return nil, 0, fmt.Errorf("error fetching upcoming slots: %w", err)
 	}
-	if slots == nil {
-		slots = []model.Slot{} // Return an empty slice instead of nil
+	if paginatedSlots == nil {
+		paginatedSlots = []model.Slot{} // Return an empty slice instead of nil
 	}
-	return slots, nil
+	return paginatedSlots, totalSlots, nil
 }
 
 func (s *SlotService) GetAvailableSlots() ([]model.Slot, error) {

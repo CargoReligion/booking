@@ -1,10 +1,17 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { api } from '$lib/api';
-    import type { SlotData, CreateSlotData, ApiResponse } from '../../types';
+    import type { SlotData, CreateSlotData, Paginated } from '../../types';
     import { currentUser } from '$lib/userStore';
 
-    let upcomingSlots: SlotData[] = [];
+    let upcomingSlots: Paginated<SlotData> = {
+        data: [],
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        totalPages: 0
+    };
+    let currentPage = 1;
     let selectedDate: string = new Date().toISOString().split('T')[0];
     let selectedTime: string = '09:00';
     
@@ -22,12 +29,19 @@
         }
     });
 
-    async function refreshSlots() {
+    async function refreshSlots(page: number = 1) {
         try {
-            const response: SlotData[] = await api.getUpcomingSlots();
-            upcomingSlots = response;
+            console.log('Refreshing slots for coach:', currentCoachId);
+            upcomingSlots = await api.getUpcomingSlots(page, 10);
+            currentPage = page;
         } catch (error) {
             console.error('Error fetching upcoming slots:', error);
+        }
+    }
+
+    function changePage(newPage: number) {
+        if (newPage >= 1 && newPage <= upcomingSlots.totalPages) {
+            refreshSlots(newPage);
         }
     }
 
@@ -106,12 +120,32 @@
 <button on:click={createSlot}>Create Slot</button>
 
 <h2>Upcoming Slots:</h2>
-{#if upcomingSlots.length > 0}
+{#if upcomingSlots.data.length > 0}
     <ul>
-        {#each upcomingSlots as slot}
+        {#each upcomingSlots.data as slot}
             <li>{formatDate(slot.startTime)} - {slot.booked ? 'Booked' : 'Available'}</li>
         {/each}
     </ul>
+    
+    <!-- Pagination UI -->
+    <div class="pagination">
+        <button on:click={() => changePage(currentPage - 1)} disabled={currentPage === 1}>
+            &lt; Previous
+        </button>
+        
+        {#each Array(upcomingSlots.totalPages) as _, i}
+            <button 
+                on:click={() => changePage(i + 1)} 
+                class:active={currentPage === i + 1}
+            >
+                {i + 1}
+            </button>
+        {/each}
+        
+        <button on:click={() => changePage(currentPage + 1)} disabled={currentPage === upcomingSlots.totalPages}>
+            Next &gt;
+        </button>
+    </div>
 {:else}
     <p>You have no upcoming slots.</p>
 {/if}
@@ -119,3 +153,29 @@
 <nav>
     <a href="/coach/past-sessions">View Past Sessions</a>
 </nav>
+
+<style>
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .pagination button {
+        margin: 0 0.25rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .pagination button.active {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+    .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>

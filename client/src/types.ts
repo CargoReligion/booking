@@ -1,5 +1,4 @@
-// src/types.ts
-export interface User {
+ export interface User {
     id: string;
     name: string;
     phoneNumber: string;
@@ -25,6 +24,14 @@ export interface User {
     satisfaction: number;
     notes: string;
   }
+
+  export interface Paginated<T> {
+    data: T[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+}
   
   export interface ApiResponse<T> {
     data: T;

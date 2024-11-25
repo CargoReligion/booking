@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cargoreligion/booking/server/api/middleware"
+	"github.com/cargoreligion/booking/server/model"
 	"github.com/cargoreligion/booking/server/service"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -74,12 +76,21 @@ func (h *SlotHandler) GetUpcomingSlots(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	slots, err := h.service.GetUpcomingSlots(userID)
+	page, pageSize := getPaginationParams(r)
+	paginatedSlots, totalCount, err := h.service.GetUpcomingSlots(userID, page, pageSize)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(slots)
+	totalPages := (totalCount + pageSize - 1) / pageSize
+	response := model.Paginated[model.Slot]{
+		Data:       paginatedSlots,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+		TotalCount: totalCount,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *SlotHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
@@ -162,4 +173,35 @@ func (h *SlotHandler) GetSlotDetails(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(slotDetails)
+}
+
+func getPaginationParams(r *http.Request) (page, pageSize int) {
+	// Get page parameter
+	pageStr := r.URL.Query().Get("page")
+	if pageStr == "" {
+		page = 1
+	} else {
+		parsedPage, err := strconv.Atoi(pageStr)
+		if err != nil || parsedPage < 1 {
+			page = 1
+		} else {
+			page = parsedPage
+		}
+	}
+
+	// Get page size parameter
+	pageSizeStr := r.URL.Query().Get("pageSize")
+	if pageSizeStr == "" {
+		pageSize = 10
+	} else {
+		parsedPageSize, err := strconv.Atoi(pageSizeStr)
+		if err != nil || parsedPageSize < 1 {
+			pageSize = 10
+		} else if parsedPageSize > 10 {
+			pageSize = 10
+		} else {
+			pageSize = parsedPageSize
+		}
+	}
+	return page, pageSize
 }
