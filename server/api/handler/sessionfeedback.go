@@ -7,6 +7,7 @@ import (
 	"github.com/cargoreligion/booking/server/api/middleware"
 	"github.com/cargoreligion/booking/server/service"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 type SessionFeedbackHandler struct {
@@ -55,4 +56,40 @@ func (h *SessionFeedbackHandler) GetPastSessionFeedbacks(w http.ResponseWriter, 
 		return
 	}
 	json.NewEncoder(w).Encode(feedbacks)
+}
+
+func (h *SessionFeedbackHandler) GetStudentsWithSessionsByCoach(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	students, err := h.service.GetStudentsWithSessionsByCoach(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(students)
+}
+
+func (h *SessionFeedbackHandler) GetSessionsForStudent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	studentId, err := uuid.Parse(vars["studentId"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	sessions, err := h.service.GetSessionsForStudent(studentId, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(sessions)
 }

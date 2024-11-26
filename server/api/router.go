@@ -37,6 +37,8 @@ func NewRouter(dbc db.DbClient) *mux.Router {
 	// Session feedback routes
 	r.HandleFunc("/api/session-feedback", sessionFeedbackHandler.CreateSessionFeedback).Methods("POST")
 	r.HandleFunc("/api/session-feedback/past", sessionFeedbackHandler.GetPastSessionFeedbacks).Methods("GET")
+	r.HandleFunc("/api/session-feedback/studentswithsessions", sessionFeedbackHandler.GetStudentsWithSessionsByCoach).Methods("GET")
+	r.HandleFunc("/api/session-feedback/sessionsforstudent/{studentId}", sessionFeedbackHandler.GetSessionsForStudent).Methods("GET")
 
 	// User routes
 	r.HandleFunc("/api/users", userHandler.GetAllUsers).Methods("GET")

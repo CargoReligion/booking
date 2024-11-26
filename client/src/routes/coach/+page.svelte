@@ -189,7 +189,7 @@
   />
 {/if}
 <nav>
-    <a href="/coach/past-sessions">View Past Sessions</a>
+    <a href="/coach/students-with-sessions">View Past Sessions</a>
 </nav>
 
 <style>

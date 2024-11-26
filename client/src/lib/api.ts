@@ -79,8 +79,23 @@ export const api = {
   createSessionFeedback: (feedbackData: CreateSessionFeedback) => 
     axiosInstance.post<ApiResponse<SessionFeedback>>(`${API_BASE_URL}/session-feedback`, feedbackData),
 
-  getPastSessionFeedbacks: () => 
-    axiosInstance.get<ApiResponse<SessionFeedback[]>>(`${API_BASE_URL}/session-feedback/past`),
+  getStudentsWithSessions: () => {
+    return axiosInstance.get<User[]>('/session-feedback/studentswithsessions')
+      .then(response => response.data)
+      .catch(error => {
+        console.error('Error in getUsersWithSessions:', error);
+        throw error;
+      });
+  },
+
+  getSessionFeedbackForStudent: (studentId: string) => {
+    return axiosInstance.get<SessionFeedback[]>(`/session-feedback/sessionsforstudent/${studentId}`)
+      .then(response => response.data)
+      .catch(error => {
+        console.error('Error in getSessionFeedbackForStudent:', error);
+        throw error;
+      });
+  },
 
   getAllUsers: () => 
     axiosInstance.get<User[]>(`${API_BASE_URL}/users`, {

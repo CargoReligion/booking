@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cargoreligion/booking/server/model"
 	"github.com/cargoreligion/booking/server/repository"
@@ -49,8 +50,11 @@ func (s *SessionFeedbackService) CreateSessionFeedback(coachID uuid.UUID, slotID
 	feedback := model.SessionFeedback{
 		ID:           uuid.New(),
 		SlotID:       slotID,
+		CoachId:      coachID,
+		StudentId:    *slot.StudentID,
 		Satisfaction: satisfaction,
 		Notes:        notes,
+		CreatedAt:    time.Now(),
 	}
 
 	err = s.sessionFeedbackRepo.CreateSessionFeedback(feedback)
@@ -78,4 +82,40 @@ func (s *SessionFeedbackService) GetPastSessionFeedbacks(coachID uuid.UUID) ([]m
 	}
 
 	return feedbacks, nil
+}
+
+func (s *SessionFeedbackService) GetStudentsWithSessionsByCoach(coachID uuid.UUID) ([]model.User, error) {
+	// Check if the user is a coach
+	user, err := s.userRepo.GetUserByID(coachID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching user: %w", err)
+	}
+	if user.Role != model.RoleCoach {
+		return nil, &ErrNotAuthorized{UserID: coachID.String(), Action: "retrieve students with sessions"}
+	}
+
+	// Fetch the students with sessions for this coach
+	students, err := s.sessionFeedbackRepo.GetStudentsWithSessionsByCoach(coachID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching students with sessions: %w", err)
+	}
+
+	return students, nil
+}
+
+func (s *SessionFeedbackService) GetSessionsForStudent(studentID, coachID uuid.UUID) ([]model.SessionFeedback, error) {
+	// Check if the user is a coach
+	user, err := s.userRepo.GetUserByID(coachID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching user: %w", err)
+	}
+	if user.Role != model.RoleCoach {
+		return nil, &ErrNotAuthorized{UserID: coachID.String(), Action: "retrieve sessions for student"}
+	}
+	// Fetch the sessions for this student and coach
+	sessions, err := s.sessionFeedbackRepo.GetSessionsForStudent(studentID, coachID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching sessions for student: %w", err)
+	}
+	return sessions, nil
 }

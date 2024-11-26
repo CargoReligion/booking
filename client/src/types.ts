@@ -41,6 +41,8 @@
   export interface SessionFeedback {
     id: string;
     slotId: string;
+    coachId: string;
+    studentId: string;
     satisfaction: number;
     notes: string;
     createdAt: string;
