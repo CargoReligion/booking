@@ -22,8 +22,8 @@ func NewSlotService(slotRepo *repository.SlotRepository, userRepo *repository.Us
 }
 
 func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.UUID, error) {
-	localLocation := time.Local
-	localStartTime := startTime.In(localLocation)
+	estLoc, _ := time.LoadLocation("America/New_York")
+	localStartTime := startTime.In(estLoc)
 	// Check if the slot is in the past
 	now := time.Now()
 	if localStartTime.Before(now) {
@@ -37,6 +37,7 @@ func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.U
 
 	// Check if the slot is between 9 AM and 5 PM
 	startHour := localStartTime.Hour()
+	fmt.Println("Start hour:", startHour)
 	if startHour < 9 || startHour >= 17 {
 		return uuid.Nil, fmt.Errorf("slots must be between 9 AM and 5 PM")
 	}

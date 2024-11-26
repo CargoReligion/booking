@@ -89,7 +89,7 @@
         <ul>
             {#each availableSlots.data as slot}
                 <li>
-                    {formatDate(slot.startTime)}
+                    {formatDate(new Date(slot.startTime))}
                     <button on:click={() => bookSlot(slot.id)}>Book</button>
                 </li>
             {/each}

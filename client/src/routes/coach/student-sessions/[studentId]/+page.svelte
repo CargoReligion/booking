@@ -4,7 +4,7 @@
     import { page } from '$app/stores';
     import { api } from '$lib/api';
     import type { SessionFeedback, ApiResponse } from '../../../../types';
-    import { formatDate } from '$lib/utils';
+    import { formatDate, UTCToLocal } from '$lib/utils';
 
     let sessionFeedbacks: SessionFeedback[] = [];
     let studentId: string;
@@ -20,7 +20,12 @@
       }
     });
 
-    function getSatisfactionStars(satisfaction: number) {
+    function displayLocalTime(utcTimeString: string): string {
+        const localDate = UTCToLocal(utcTimeString);
+        return formatDate(localDate);
+    }
+
+    function getSatisfactionStars(satisfaction: number): string {
         return '★'.repeat(satisfaction) + '☆'.repeat(5 - satisfaction);
     }
 </script>
@@ -40,7 +45,7 @@
         <div class="feedback-list">
             {#each sessionFeedbacks as feedback (feedback.id)}
                 <div class="feedback-card">
-                    <div class="feedback-date">{formatDate(feedback.createdAt)}</div>
+                    <div class="feedback-date">{displayLocalTime(feedback.createdAt)}</div>
                     <div class="feedback-satisfaction" title="Satisfaction: {feedback.satisfaction} out of 5">
                         {getSatisfactionStars(feedback.satisfaction)}
                     </div>
