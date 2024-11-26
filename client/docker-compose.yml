@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  svelte-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"  # Map port 3000 on the host to port 3000 in the container
+    volumes:
+      - .:/app # Mount the current directory to /app in the container
+      - /app/node_modules # Exclude node_modules from being overridden by the volume
+    stdin_open: true
+    tty: true

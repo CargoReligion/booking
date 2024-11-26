@@ -37,7 +37,6 @@ func (s *SlotService) CreateSlot(coachID uuid.UUID, startTime time.Time) (uuid.U
 
 	// Check if the slot is between 9 AM and 5 PM
 	startHour := localStartTime.Hour()
-	fmt.Println("Start hour:", startHour)
 	if startHour < 9 || startHour >= 17 {
 		return uuid.Nil, fmt.Errorf("slots must be between 9 AM and 5 PM")
 	}
