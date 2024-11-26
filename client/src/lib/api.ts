@@ -9,7 +9,7 @@ if (browser) {
   const storedUser = localStorage.getItem('currentUser');
   initialUserId = storedUser ? JSON.parse(storedUser).id : null;
 }
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -29,10 +29,10 @@ axiosInstance.interceptors.request.use(request => {
 
 export const api = {
   createSlot: (slotData: CreateSlotData): Promise<ApiResponse<SlotData>> => 
-    axiosInstance.post(`${API_BASE_URL}/slots`, slotData),
+    axiosInstance.post(`/api/slots`, slotData),
 
   getUpcomingSlots: (page: number = 1, pageSize: number = 10) => {
-    return axiosInstance.get<Paginated<SlotData>>('/slots/upcoming', {
+    return axiosInstance.get<Paginated<SlotData>>('/api/slots/upcoming', {
       params: { page, pageSize }
     })
     .then(response => response.data)
@@ -43,7 +43,7 @@ export const api = {
   },
 
   getAvailableSlots: (coachId: string, page: number = 1, pageSize: number = 10) => {
-    return axiosInstance.get<Paginated<SlotData>>(`/slots/available/${coachId}`, {
+    return axiosInstance.get<Paginated<SlotData>>(`/api/slots/available/${coachId}`, {
       params: { page, pageSize }
     })
     .then(response => response.data)
@@ -54,10 +54,10 @@ export const api = {
   },
 
   bookSlot: (id: string) => 
-    axiosInstance.post<SlotData>(`/slots/${id}/book`),
+    axiosInstance.post<SlotData>(`/api/slots/${id}/book`),
 
   getUpcomingBookingsForStudent: (page: number = 1, pageSize: number = 10) => {
-    return axiosInstance.get<Paginated<SlotData>>('/students/bookings', {
+    return axiosInstance.get<Paginated<SlotData>>('/api/students/bookings', {
         params: { page, pageSize }
     })
       .then(response => response.data)
@@ -68,7 +68,7 @@ export const api = {
   },
 
   getSlotDetails: (slotId: string) => {
-    return axiosInstance.get<SlotDetails>(`/slots/${slotId}/details`)
+    return axiosInstance.get<SlotDetails>(`/api/slots/${slotId}/details`)
       .then(response => response.data)
       .catch(error => {
         console.error('Error in getSlotDetails:', error);
@@ -77,10 +77,10 @@ export const api = {
   },
 
   createSessionFeedback: (feedbackData: CreateSessionFeedback) => 
-    axiosInstance.post<ApiResponse<SessionFeedback>>(`${API_BASE_URL}/session-feedback`, feedbackData),
+    axiosInstance.post<ApiResponse<SessionFeedback>>(`/api/session-feedback`, feedbackData),
 
   getStudentsWithSessions: () => {
-    return axiosInstance.get<User[]>('/session-feedback/studentswithsessions')
+    return axiosInstance.get<User[]>('/api/session-feedback/studentswithsessions')
       .then(response => response.data)
       .catch(error => {
         console.error('Error in getUsersWithSessions:', error);
@@ -89,7 +89,7 @@ export const api = {
   },
 
   getSessionFeedbackForStudent: (studentId: string) => {
-    return axiosInstance.get<SessionFeedback[]>(`/session-feedback/sessionsforstudent/${studentId}`)
+    return axiosInstance.get<SessionFeedback[]>(`/api/session-feedback/sessionsforstudent/${studentId}`)
       .then(response => response.data)
       .catch(error => {
         console.error('Error in getSessionFeedbackForStudent:', error);
@@ -98,7 +98,7 @@ export const api = {
   },
 
   getAllUsers: () => 
-    axiosInstance.get<User[]>(`${API_BASE_URL}/users`, {
+    axiosInstance.get<User[]>(`/api/users`, {
       headers: {
         'X-User-Id': '989f159e-4ad7-4589-8a1c-1276078022ec',
       },
