@@ -32,7 +32,7 @@
 <div class="container">
     <h1>Session Feedback for Student</h1>
 
-    <a href="/coach/users-with-sessions" class="back-link">← Back to Students List</a>
+    <a href="/coach/students-with-sessions" class="back-link">← Back to Students List</a>
 
     {#if sessionFeedbacks.length === 0}
         <p>No feedback available for this student.</p>
