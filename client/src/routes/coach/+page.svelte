@@ -155,8 +155,8 @@
                                 </span>
                             </div>
                             <div class="slot-actions">
-                                <button class="btn-secondary" on:click={() => viewSlotDetails(slot.id)}>View Details</button>
                                 {#if slot.booked}
+                                    <button class="btn-secondary" on:click={() => viewSlotDetails(slot.id)}>View Details</button>
                                     <button class="btn-secondary" on:click={() => openFeedbackModal(slot.id)}>Enter Feedback</button>
                                 {/if}
                             </div>
