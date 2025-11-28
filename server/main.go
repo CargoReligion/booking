@@ -18,6 +18,7 @@ func main() {
 
 	log.Info().Msg("Starting HTTP server...")
 
+	log.Info().Msg("Trying to connect to database...")
 	dbInst, err := db.GetDbConnection(5)
 	if err != nil {
 		log.Error().Err(err).Msg("")
