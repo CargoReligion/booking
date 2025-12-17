@@ -39,3 +39,4 @@ The server will start and be available for the client application to interact wi
 ## Development
 
 For development purposes, you can run both the client and server simultaneously using Docker Compose. This setup ensures that both applications are running in isolated environments with all necessary dependencies.
+# test Tue Dec 16 22:21:32 EST 2025
